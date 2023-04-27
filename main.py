@@ -1,8 +1,7 @@
 import random
 from functools import reduce
+import matplotlib.pyplot as plt
 
-# print(random.random())
-# asdasdasdas
 
 CROSSOVER_PROB = 0.75
 MUTACION_PROB = 0.05
@@ -10,7 +9,6 @@ MUTACION_PROB = 0.05
 CANTIDAD_POBLACION = 10
 CANTIDAD_CICLOS = 100
 CANTIDAD_GENES = 30
-CANTIDAD_CORTES = 1
 
 
 # Funcion que pasa de binario a decimal.
@@ -114,6 +112,10 @@ poblacion_fitness = []
 ruleta = []
 acum = 0
 
+maximo_historico = []
+minimo_historico = []
+promedio_historico = []
+
 poblacion_inicial = []
 # GENERAMOS POBLACION INICIAL ALEATORIA
 # Y calculamos el minimo, el maximo y el promedio
@@ -129,18 +131,23 @@ acum = sum(poblacion_f_obj)
 maximo_inic = max(poblacion_f_obj)
 minimo_inic = min(poblacion_f_obj)
 promedio_inic = sum(poblacion_f_obj) / CANTIDAD_POBLACION
+
+maximo_historico.append(maximo_inic)
+minimo_historico.append(minimo_inic)
+promedio_historico.append(promedio_inic)
+
 print("Poblacion Inicial")
 print(f"{maximo_inic=} --- {minimo_inic=} --- {promedio_inic=}\n\n")
 
 poblacion = poblacion_inicial
-for i in range(CANTIDAD_CICLOS):
+for i in range(1, CANTIDAD_CICLOS):
 
     # Evaluamos el fitness de toda la poblacion
     poblacion_fitness = fitness(acum, poblacion_f_obj)
 
     # Generamos la poblacion
     poblacion_nueva = []
-    for i in range(1, CANTIDAD_POBLACION // 2):
+    for j in range(1, CANTIDAD_POBLACION // 2):
         #Generamos la ruleta con la funcion generar_ruleta
         ruleta = generar_ruleta(poblacion_fitness)
 
@@ -166,7 +173,13 @@ for i in range(CANTIDAD_CICLOS):
     maximo = max(poblacion_f_obj)
     minimo = min(poblacion_f_obj)
     promedio = acum / CANTIDAD_POBLACION
-    print(f"CORRIDA: {i}\n")
+
+    maximo_historico.append(maximo)
+    minimo_historico.append(minimo)
+    promedio_historico.append(promedio)
+
+
+    print(f"CORRIDA: {i}")
     print(f"{maximo=} --- {minimo=} --- {promedio=}\n\n")
 
 ##Comparamos los resultados de la poblacion inicial con la poblacion final
@@ -177,3 +190,27 @@ print(f"{maximo_inic=} --- {minimo_inic=} --- {promedio_inic=}\n\n")
 print("Poblacion final")
 print(f"{maximo=} --- {minimo=} --- {promedio=}\n\n")
 
+poblaciones = [i for i in range(CANTIDAD_CICLOS)]
+
+
+#Mostrar graficos de maximo historico
+plt.plot(poblaciones,maximo_historico,scaley=False)
+plt.title("Máximo Historico")
+plt.xlabel("Numero de iteraciones")
+plt.ylabel("Valores")
+plt.show()
+
+
+#Mostrar graficos de minimo historico
+plt.plot(poblaciones,maximo_historico,scaley=False)
+plt.title("Minimo Historico")
+plt.xlabel("Numero de iteraciones")
+plt.ylabel("Valores")
+plt.show()
+
+#Mostra graficos de promedio historico
+plt.plot(poblaciones,promedio_historico,scaley=False)
+plt.title("Promedio Historico")
+plt.xlabel("Numero de iteraciones")
+plt.ylabel("Valores")
+plt.show()
