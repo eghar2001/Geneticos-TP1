@@ -2,7 +2,7 @@ import random
 from functools import reduce
 import matplotlib.pyplot as plt
 
-
+CANTIDAD_ELITISMO = 2
 CROSSOVER_PROB = 0.75
 MUTACION_PROB = 0.05
 
@@ -105,6 +105,41 @@ def mutacion(cromo):
         cromo[gen] = gen_mutado
 
 
+
+def generar_poblacion_simple(poblacion,cantidad_elementos):
+    # Evaluamos el fitness de toda la poblacion
+    poblacion_fitness = fitness(acum, poblacion_f_obj)
+
+    # Generamos la poblacion
+    poblacion_nueva = []
+    for j in range(cantidad_elementos // 2):
+        #Generamos la ruleta con la funcion generar_ruleta
+        ruleta = generar_ruleta(poblacion_fitness)
+
+        #Elegimos los padres
+        padre_1, padre_2 = seleccion(poblacion, ruleta)
+
+        #Hacemos el crossover y mutamos los hijos
+        hijo_1, hijo_2 = crossover(padre_1, padre_2)
+        mutacion(hijo_1)
+        mutacion(hijo_2)
+
+        #Agregamos los hijos a la poblacion
+        poblacion_nueva.append(hijo_1)
+        poblacion_nueva.append(hijo_2)
+
+    return poblacion_nueva
+
+def generar_poblacion_elitismo(poblacion,cantidad_elementos, cantidad_elitismo):
+    def elitismo(poblacion,cantidad_elitismo):
+        """Funcion que dada una poblacion y su fitness, selecciona los 2 cromosomas con mayor fitness"""
+        poblacion_ordenada = sorted(poblacion, key=funcion_objetivo, reverse=True)
+        return [poblacion_ordenada[i] for i in range(cantidad_elitismo)]
+    poblacion_nueva = elitismo(poblacion, cantidad_elitismo)
+    poblacion_nueva += generar_poblacion_simple(poblacion,cantidad_elementos- cantidad_elitismo)
+    return poblacion_nueva
+
+
 poblacion = []
 cromosoma = []
 poblacion_f_obj = []
@@ -145,25 +180,9 @@ for i in range(1, CANTIDAD_CICLOS):
     # Evaluamos el fitness de toda la poblacion
     poblacion_fitness = fitness(acum, poblacion_f_obj)
 
-    # Generamos la poblacion
-    poblacion_nueva = []
-    for j in range(1, CANTIDAD_POBLACION // 2):
-        #Generamos la ruleta con la funcion generar_ruleta
-        ruleta = generar_ruleta(poblacion_fitness)
+    # Generamos la poblacion con elitismo
 
-        #Elegimos los padres
-        padre_1, padre_2 = seleccion(poblacion, ruleta)
-
-        #Hacemos el crossover y mutamos los hijos
-        hijo_1, hijo_2 = crossover(padre_1, padre_2)
-        mutacion(hijo_1)
-        mutacion(hijo_2)
-
-        #Agregamos los hijos a la poblacion
-        poblacion_nueva.append(hijo_1)
-        poblacion_nueva.append(hijo_2)
-    #Seteamos la poblacon
-    poblacion = poblacion_nueva
+    poblacion = generar_poblacion_elitismo(poblacion,CANTIDAD_POBLACION, CANTIDAD_ELITISMO)
 
     # APLICAMOS FUNCION OBJETIVO A CADA ELEMENTO DE LA POBLACION
     poblacion_f_obj = [funcion_objetivo(cromo) for cromo in poblacion]
@@ -202,7 +221,7 @@ plt.show()
 
 
 #Mostrar graficos de minimo historico
-plt.plot(poblaciones,maximo_historico,scaley=False)
+plt.plot(poblaciones,minimo_historico,scaley=False)
 plt.title("Minimo Historico")
 plt.xlabel("Numero de iteraciones")
 plt.ylabel("Valores")
