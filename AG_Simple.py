@@ -2,7 +2,7 @@ import random
 from functools import reduce
 import matplotlib.pyplot as plt
 
-
+CANTIDAD_ELITISMO = 2
 CROSSOVER_PROB = 0.75
 MUTACION_PROB = 0.05
 
@@ -66,6 +66,45 @@ def seleccion(poblacion, ruleta):
     cromo_1 = poblacion[indice_1]
     cromo_2 = poblacion[indice_2]
     return cromo_1, cromo_2
+
+def generar_poblacion_elitismo(poblacion:[],cantidad_poblacion:int, cantidad_elitismo:int):
+    def elitismo(poblacion,cantidad_elitismo):
+        """Funcion que dada una poblacion y su fitness, selecciona los 2 cromosomas con mayor fitness"""
+        poblacion_ordenada = sorted(poblacion, key=funcion_objetivo, reverse=True)
+        return [poblacion_ordenada[i] for i in range(cantidad_elitismo)]
+
+
+    # Generamos la poblacion con elitismo
+    poblacion_nueva = elitismo(poblacion, cantidad_elitismo)
+
+    poblacion_nueva += generar_poblacion_simple(poblacion,cantidad_poblacion-cantidad_elitismo)
+    print(len(poblacion_nueva))
+    return poblacion_nueva
+
+def generar_poblacion_simple(poblacion:[],cantidad_poblacion:int):
+    # APLICAMOS FUNCION OBJETIVO A CADA ELEMENTO DE LA POBLACION
+    poblacion_f_obj = [funcion_objetivo(cromo) for cromo in poblacion]
+    poblacion_fitness = fitness(acum, poblacion_f_obj)
+
+    # Generamos la poblacion
+    poblacion_nueva = []
+    for j in range(cantidad_poblacion // 2):
+        # Generamos la ruleta con la funcion generar_ruleta
+        ruleta = generar_ruleta(poblacion_fitness)
+
+        # Elegimos los padres
+        padre_1, padre_2 = seleccion(poblacion, ruleta)
+
+        # Hacemos el crossover y mutamos los hijos
+        hijo_1, hijo_2 = crossover(padre_1, padre_2)
+        mutacion(hijo_1)
+        mutacion(hijo_2)
+
+        # Agregamos los hijos a la poblacion
+        poblacion_nueva.append(hijo_1)
+        poblacion_nueva.append(hijo_2)
+    # Seteamos la poblacon
+    return poblacion_nueva
 
 
 def crossover(padre_1, padre_2):
@@ -143,30 +182,10 @@ poblacion = poblacion_inicial
 for i in range(1, CANTIDAD_CICLOS):
 
     # Evaluamos el fitness de toda la poblacion
-    poblacion_fitness = fitness(acum, poblacion_f_obj)
 
-    # Generamos la poblacion
-    poblacion_nueva = []
-    for j in range(1, CANTIDAD_POBLACION // 2):
-        #Generamos la ruleta con la funcion generar_ruleta
-        ruleta = generar_ruleta(poblacion_fitness)
+    poblacion = generar_poblacion_elitismo(poblacion,CANTIDAD_POBLACION,CANTIDAD_ELITISMO)
 
-        #Elegimos los padres
-        padre_1, padre_2 = seleccion(poblacion, ruleta)
 
-        #Hacemos el crossover y mutamos los hijos
-        hijo_1, hijo_2 = crossover(padre_1, padre_2)
-        mutacion(hijo_1)
-        mutacion(hijo_2)
-
-        #Agregamos los hijos a la poblacion
-        poblacion_nueva.append(hijo_1)
-        poblacion_nueva.append(hijo_2)
-    #Seteamos la poblacon
-    poblacion = poblacion_nueva
-
-    # APLICAMOS FUNCION OBJETIVO A CADA ELEMENTO DE LA POBLACION
-    poblacion_f_obj = [funcion_objetivo(cromo) for cromo in poblacion]
 
     # OBTENEMOS EL TOTAL
     acum = sum(poblacion_f_obj)
