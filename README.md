@@ -7,3 +7,5 @@ Integrantes:
     - Marincioni Alejandro
     - Karlen Aguirre Esteban
     
+Librerias a descargar:
+    - matplotlib

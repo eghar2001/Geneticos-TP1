@@ -1,5 +1,7 @@
 import random
-from functools import reduce
+from typing import Callable, List
+from functools import reduce, partial
+
 import matplotlib.pyplot as plt
 
 CANTIDAD_ELITISMO = 2
@@ -7,9 +9,20 @@ CROSSOVER_PROB = 0.75
 MUTACION_PROB = 0.05
 
 CANTIDAD_POBLACION = 10
-CANTIDAD_CICLOS = 100
+CANTIDAD_CICLOS = 200
 CANTIDAD_GENES = 30
 
+def menu_elitismo():
+    print("ELITISMO")
+    print()
+    print("E- Para usar elitismo")
+    print("N- No usar elitismo")
+
+def menu_seleccion():
+    print("SELECCION")
+    print()
+    print("T- Seleccion por torneo")
+    print("R- Seleccion por ruleta")
 
 # Funcion que pasa de binario a decimal.
 def binario_a_decimal(cromosoma):
@@ -54,9 +67,11 @@ def generar_ruleta(poblacion_fitness):
     return ruleta
 
 
-def seleccion(poblacion, ruleta):
+def seleccion_ruleta(poblacion, poblacion_fitness):
     """Funcion que dada una poblacion y una ruleta, selecciona los
     2 padres mas aptos para realizar el crossover"""
+    # Generamos la ruleta con la funcion generar_ruleta
+    ruleta = generar_ruleta(poblacion_fitness)
     MAXIMO = len(ruleta) - 1
     #Elegimos la posicion de la ruleta
     indice_1 = ruleta[random.randint(0, MAXIMO)]
@@ -67,8 +82,21 @@ def seleccion(poblacion, ruleta):
     cromo_2 = poblacion[indice_2]
     return cromo_1, cromo_2
 
+def seleccion_torneo(poblacion, poblacion_fitness):
+    seleccionados = []
+    for i in range(2):
 
-def crossover(padre_1, padre_2):
+        #torneo = random.sample(poblacion, 2) # selecciona 2 individuos al azar de la población
+        """
+        aptitudes = [individuo.aptitud() for individuo in torneo] # evalúa la aptitud de cada uno
+        """
+        torneo = [random.randint(0,len(poblacion)-1), random.randint(0,len(poblacion)-1)]
+        max_poblacion_fitness=max([poblacion_fitness[i] for i in torneo])
+        index_max_fitness = poblacion_fitness.index(max_poblacion_fitness)
+        seleccionados.append(poblacion[index_max_fitness])
+    return tuple(seleccionados)
+
+def crossover(padre_1:[], padre_2:[]):
     """
     Funcion que dados 2 cromosomas padres, realiza el crossover y retorna
     los hijos
@@ -106,18 +134,16 @@ def mutacion(cromo):
 
 
 
-def generar_poblacion_simple(poblacion,cantidad_elementos):
+def generar_poblacion_simple(poblacion,cantidad_elementos, seleccion:Callable):
     # Evaluamos el fitness de toda la poblacion
     poblacion_fitness = fitness(acum, poblacion_f_obj)
 
     # Generamos la poblacion
     poblacion_nueva = []
     for j in range(cantidad_elementos // 2):
-        #Generamos la ruleta con la funcion generar_ruleta
-        ruleta = generar_ruleta(poblacion_fitness)
 
         #Elegimos los padres
-        padre_1, padre_2 = seleccion(poblacion, ruleta)
+        padre_1, padre_2 = seleccion(poblacion, poblacion_fitness)
 
         #Hacemos el crossover y mutamos los hijos
         hijo_1, hijo_2 = crossover(padre_1, padre_2)
@@ -130,13 +156,16 @@ def generar_poblacion_simple(poblacion,cantidad_elementos):
 
     return poblacion_nueva
 
-def generar_poblacion_elitismo(poblacion,cantidad_elementos, cantidad_elitismo):
+def generar_poblacion(poblacion:[],cantidad_elementos:int,seleccion:Callable,  cantidad_elitismo:int =0):
     def elitismo(poblacion,cantidad_elitismo):
         """Funcion que dada una poblacion y su fitness, selecciona los 2 cromosomas con mayor fitness"""
         poblacion_ordenada = sorted(poblacion, key=funcion_objetivo, reverse=True)
+
         return [poblacion_ordenada[i] for i in range(cantidad_elitismo)]
-    poblacion_nueva = elitismo(poblacion, cantidad_elitismo)
-    poblacion_nueva += generar_poblacion_simple(poblacion,cantidad_elementos- cantidad_elitismo)
+    poblacion_nueva = []
+    if(cantidad_elitismo > 0):
+        poblacion_nueva += elitismo(poblacion, cantidad_elitismo)
+    poblacion_nueva += generar_poblacion_simple(poblacion,cantidad_elementos- cantidad_elitismo, seleccion )
     return poblacion_nueva
 
 
@@ -160,6 +189,37 @@ for i in range(CANTIDAD_POBLACION):
     poblacion_inicial.append(cromosoma)
     cromosoma = []
 
+
+
+
+print("INICIO DE PROGRAMA")
+menu_elitismo()
+tipo_elitismo = input().upper()
+teclas_posibles_elitismo = ("E", "N")
+while tipo_elitismo not in teclas_posibles_elitismo:
+    print("No escogio tecla valida, vuelva a ingresar")
+    menu_elitismo()
+    tipo_elitismo = input().upper()
+cant_elitismo = 0
+print(tipo_elitismo)
+if tipo_elitismo == "E":
+   cant_elitismo = CANTIDAD_ELITISMO
+
+print(cant_elitismo)
+
+
+
+menu_seleccion()
+tipo_seleccion = input().upper()
+teclas_posibles_seleccion = ("R", "T")
+while tipo_seleccion not in teclas_posibles_seleccion:
+    print("No escogio tecla valida, seleccione tecla valida")
+    menu_seleccion()
+    tipo_seleccion = input().upper()
+
+
+
+
 poblacion_f_obj = [funcion_objetivo(cromo) for cromo in poblacion_inicial]
 acum = sum(poblacion_f_obj)
 
@@ -181,8 +241,10 @@ for i in range(1, CANTIDAD_CICLOS):
     poblacion_fitness = fitness(acum, poblacion_f_obj)
 
     # Generamos la poblacion con elitismo
-
-    poblacion = generar_poblacion_elitismo(poblacion,CANTIDAD_POBLACION, CANTIDAD_ELITISMO)
+    if tipo_seleccion == "R":
+        poblacion = generar_poblacion(poblacion,CANTIDAD_POBLACION,seleccion_ruleta, cant_elitismo)
+    elif tipo_seleccion == "T":
+        poblacion = generar_poblacion(poblacion, CANTIDAD_POBLACION, seleccion_torneo, cant_elitismo)
 
     # APLICAMOS FUNCION OBJETIVO A CADA ELEMENTO DE LA POBLACION
     poblacion_f_obj = [funcion_objetivo(cromo) for cromo in poblacion]
