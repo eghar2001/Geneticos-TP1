@@ -8,4 +8,6 @@ Integrantes:
     - Karlen Aguirre Esteban
     
 Librerias a descargar:
-    - matplotlib
+    - matplotlib (para hacer graficos)
+    - pandas(para pasar a excel)
+    - openpyxl (para pasar a excel)

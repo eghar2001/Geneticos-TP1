@@ -1,6 +1,7 @@
 import random
 from typing import Callable, List
 from functools import reduce, partial
+import pandas as pd
 
 import matplotlib.pyplot as plt
 
@@ -205,7 +206,8 @@ print(tipo_elitismo)
 if tipo_elitismo == "E":
    cant_elitismo = CANTIDAD_ELITISMO
 
-print(cant_elitismo)
+
+
 
 
 
@@ -271,27 +273,25 @@ print(f"{maximo_inic=} --- {minimo_inic=} --- {promedio_inic=}\n\n")
 print("Poblacion final")
 print(f"{maximo=} --- {minimo=} --- {promedio=}\n\n")
 
-poblaciones = [i for i in range(CANTIDAD_CICLOS)]
+poblaciones = list(range(CANTIDAD_CICLOS))
 
 
-#Mostrar graficos de maximo historico
-plt.plot(poblaciones,maximo_historico,scaley=False)
-plt.title("Máximo Historico")
+#Mostrar graficos historico
+plt.plot(poblaciones,maximo_historico,"g", label = "max")
+plt.plot(poblaciones,minimo_historico, "b", label = "avg")
+plt.plot(poblaciones,promedio_historico, "r", label = "min")
+plt.title("Máximo, mínimo y promedio Historico")
 plt.xlabel("Numero de iteraciones")
 plt.ylabel("Valores")
 plt.show()
 
 
-#Mostrar graficos de minimo historico
-plt.plot(poblaciones,minimo_historico,scaley=False)
-plt.title("Minimo Historico")
-plt.xlabel("Numero de iteraciones")
-plt.ylabel("Valores")
-plt.show()
+print("Presione E si desea generar un excel")
+pasa_a_excel  = input().upper()
+if pasa_a_excel == "E":
+    data = {"nro_poblacion":poblaciones, "maximo":maximo_historico, "minimo": minimo_historico, "promedio": promedio_historico }
 
-#Mostra graficos de promedio historico
-plt.plot(poblaciones,promedio_historico,scaley=False)
-plt.title("Promedio Historico")
-plt.xlabel("Numero de iteraciones")
-plt.ylabel("Valores")
-plt.show()
+    df = pd.DataFrame(data, columns=["nro_poblacion", "maximo", "minimo", "promedio"])
+
+    df.to_excel("algoritmo_genetico.xlsx", header = True)
+
