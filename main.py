@@ -5,13 +5,18 @@ import pandas as pd
 
 import matplotlib.pyplot as plt
 
+#Parametros para variar entre corridas
 CANTIDAD_ELITISMO = 2
 CROSSOVER_PROB = 0.75
 MUTACION_PROB = 0.05
 
 CANTIDAD_POBLACION = 10
-CANTIDAD_CICLOS = 200
+CANTIDAD_CICLOS = 100
 CANTIDAD_GENES = 30
+
+"""
+COMIENZO DEL PROGRAMA
+"""
 
 def menu_elitismo():
     print("ELITISMO")
@@ -136,6 +141,7 @@ def mutacion(cromo):
 
 
 def generar_poblacion_simple(poblacion,cantidad_elementos, seleccion:Callable):
+    """Funcion que genera una poblacion de manera simple sin elitismo, se usa para llamar en generar_poblacion"""
     # Evaluamos el fitness de toda la poblacion
     poblacion_fitness = fitness(acum, poblacion_f_obj)
 
@@ -158,6 +164,9 @@ def generar_poblacion_simple(poblacion,cantidad_elementos, seleccion:Callable):
     return poblacion_nueva
 
 def generar_poblacion(poblacion:[],cantidad_elementos:int,seleccion:Callable,  cantidad_elitismo:int =0):
+    """Funcion que se utiliza para generar poblacion, recibe una poblacion inicia, una cantidad de elementos para generar la poblacion
+     um metodo de seleccion y una cantidad de elementos con elitismo
+     """
     def elitismo(poblacion,cantidad_elitismo):
         """Funcion que dada una poblacion y su fitness, selecciona los 2 cromosomas con mayor fitness"""
         poblacion_ordenada = sorted(poblacion, key=funcion_objetivo, reverse=True)
@@ -168,7 +177,43 @@ def generar_poblacion(poblacion:[],cantidad_elementos:int,seleccion:Callable,  c
         poblacion_nueva += elitismo(poblacion, cantidad_elitismo)
     poblacion_nueva += generar_poblacion_simple(poblacion,cantidad_elementos- cantidad_elitismo, seleccion )
     return poblacion_nueva
+def buscar_max_cromo(poblacion):
+    """Funcion que busca el cromosoma maximo """
+    max = -1
+    max_cromo = poblacion[0]
 
+    for  cromo in poblacion:
+        cromo_f_obj = funcion_objetivo(cromo)
+        if cromo_f_obj > max:
+            max_cromo = cromo
+            max = cromo_f_obj
+
+    return max_cromo
+
+
+def buscar_min_cromo(poblacion):
+    """Funcion que busca el cromosoma minimo"""
+    min = 1
+    min_cromo = poblacion[0]
+
+    for cromo in poblacion:
+        cromo_f_obj = funcion_objetivo(cromo)
+        if cromo_f_obj < min:
+            min_cromo = cromo
+            min = cromo_f_obj
+
+    return min_cromo
+
+
+
+
+def cromo_to_string(cromosoma):
+    """Funcion que dado un cromosoma como una lista, retorna un numero binario como string"""
+    str_cromo = ""
+    for bit in cromosoma:
+        str_cromo += str(bit)
+
+    return str_cromo
 
 poblacion = []
 cromosoma = []
@@ -180,19 +225,17 @@ acum = 0
 maximo_historico = []
 minimo_historico = []
 promedio_historico = []
+cromosoma_maximo_historico = []
+cromosoma_minimo_historico = []
 
 poblacion_inicial = []
-# GENERAMOS POBLACION INICIAL ALEATORIA
-# Y calculamos el minimo, el maximo y el promedio
-for i in range(CANTIDAD_POBLACION):
-    for j in range(CANTIDAD_GENES):
-        cromosoma.append(random.randint(0, 1))
-    poblacion_inicial.append(cromosoma)
-    cromosoma = []
 
 
+"""
+    INICIO DEL PROGRAMA
+"""
 
-
+#
 print("INICIO DE PROGRAMA")
 menu_elitismo()
 tipo_elitismo = input().upper()
@@ -202,11 +245,8 @@ while tipo_elitismo not in teclas_posibles_elitismo:
     menu_elitismo()
     tipo_elitismo = input().upper()
 cant_elitismo = 0
-print(tipo_elitismo)
 if tipo_elitismo == "E":
    cant_elitismo = CANTIDAD_ELITISMO
-
-
 
 
 
@@ -221,11 +261,23 @@ while tipo_seleccion not in teclas_posibles_seleccion:
 
 
 
+# GENERAMOS POBLACION INICIAL ALEATORIA
+# Y calculamos el minimo, el maximo y el promedio
+for i in range(CANTIDAD_POBLACION):
+    for j in range(CANTIDAD_GENES):
+        cromosoma.append(random.randint(0, 1))
+    poblacion_inicial.append(cromosoma)
+    cromosoma = []
 
 poblacion_f_obj = [funcion_objetivo(cromo) for cromo in poblacion_inicial]
 acum = sum(poblacion_f_obj)
+maximo_cromo_inic = buscar_max_cromo(poblacion_inicial)
+minimo_cromo_inic = buscar_min_cromo(poblacion_inicial)
 
 maximo_inic = max(poblacion_f_obj)
+cromosoma_maximo_historico.append(cromo_to_string(maximo_cromo_inic))
+cromosoma_minimo_historico.append(cromo_to_string(minimo_cromo_inic))
+
 minimo_inic = min(poblacion_f_obj)
 promedio_inic = sum(poblacion_f_obj) / CANTIDAD_POBLACION
 
@@ -233,8 +285,6 @@ maximo_historico.append(maximo_inic)
 minimo_historico.append(minimo_inic)
 promedio_historico.append(promedio_inic)
 
-print("Poblacion Inicial")
-print(f"{maximo_inic=} --- {minimo_inic=} --- {promedio_inic=}\n\n")
 
 poblacion = poblacion_inicial
 for i in range(1, CANTIDAD_CICLOS):
@@ -256,22 +306,27 @@ for i in range(1, CANTIDAD_CICLOS):
     maximo = max(poblacion_f_obj)
     minimo = min(poblacion_f_obj)
     promedio = acum / CANTIDAD_POBLACION
+    maximo_cromo = buscar_max_cromo(poblacion)
+    minimo_cromo = buscar_min_cromo(poblacion)
+
+    cromosoma_maximo_historico.append(cromo_to_string(maximo_cromo))
+    cromosoma_minimo_historico.append(cromo_to_string(minimo_cromo))
 
     maximo_historico.append(maximo)
     minimo_historico.append(minimo)
     promedio_historico.append(promedio)
 
 
-    print(f"CORRIDA: {i}")
-    print(f"{maximo=} --- {minimo=} --- {promedio=}\n\n")
+
 
 ##Comparamos los resultados de la poblacion inicial con la poblacion final
 print("Poblacion Inicial")
 
-print(f"{maximo_inic=} --- {minimo_inic=} --- {promedio_inic=}\n\n")
-
+print(f"maximo: {maximo_inic} --- minimo: {minimo_inic} --- promedio: {promedio_inic}")
+print(f"maximo_cromo: {maximo_cromo_inic} --- minimo_cromo: {minimo_cromo_inic}\n\n")
 print("Poblacion final")
-print(f"{maximo=} --- {minimo=} --- {promedio=}\n\n")
+print(f"maximo: {maximo} --- minimo: {minimo} --- promedio: {promedio}")
+print(f"maximo_cromo:{maximo_cromo} --- minimo_cromo:{minimo_cromo}")
 
 poblaciones = list(range(CANTIDAD_CICLOS))
 
@@ -289,9 +344,11 @@ plt.show()
 print("Presione E si desea generar un excel")
 pasa_a_excel  = input().upper()
 if pasa_a_excel == "E":
-    data = {"nro_poblacion":poblaciones, "maximo":maximo_historico, "minimo": minimo_historico, "promedio": promedio_historico }
+    data = {"nro_poblacion":poblaciones, "maximo":maximo_historico, "minimo": minimo_historico,
+            "promedio": promedio_historico, "maximo_cromo": cromosoma_maximo_historico,
+            "minimo_cromo": cromosoma_minimo_historico}
 
-    df = pd.DataFrame(data, columns=["nro_poblacion", "maximo", "minimo", "promedio"])
+    df = pd.DataFrame(data, columns=["nro_poblacion", "maximo", "minimo", "promedio","maximo_cromo", "minimo_cromo"])
 
     df.to_excel("algoritmo_genetico.xlsx", header = True)
 
